@@ -435,7 +435,8 @@ bool AppInit2()
         SoftSetBoolArg("-rescan", true);
     }
 
-	if (GetBoolArg("-zapwallettxes", false)) {
+    if (GetBoolArg("-zapwallettxes", false))
+    {
         if (SoftSetBoolArg("-rescan", true))
             printf("AppInit2 : parameter interaction: -zapwallettxes=<mode> -> setting -rescan=1\n");
     }
@@ -788,8 +789,8 @@ bool AppInit2()
 	if (GetBoolArg("-zapwallettxes", false)) {
 	   uiInterface.InitMessage(_("Zapping all transactions from wallet..."));
 
-	   pwalletMain = new CWallet("wallet.dat");
-	   DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
+       pwalletMain = new CWallet("wallet.dat");
+       DBErrors nZapWalletRet = pwalletMain->ZapWalletTx(vWtx);
 	   if (nZapWalletRet != DB_LOAD_OK) {
 		   uiInterface.InitMessage(_("Error loading wallet.dat: Wallet corrupted"));
 		   return false;

@@ -1237,7 +1237,7 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
 
         return (nSubsidy * nBonusMultiplier) + nFees;
     } 
-	else 
+    else if(IsBeforeBlock(nTime, FORK_HEIGHT_12))
 	{
 		int64_t nMinimumStakeHours = nStakeMinAge / 60 / 60;
 		
@@ -1270,6 +1270,35 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
 		
 		return (nSubsidy * nBonusMultiplier) + nFees;
 	}
+    else
+    {
+        CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
+        int64_t nSubsidy = bnSubsidy.getuint64();
+        nBonusMultiplier = 1;
+
+        //super block calculations from breakcoin
+        std::string cseed_str = prevHash.ToString().substr(7,7);
+        const char* cseed = cseed_str.c_str();
+        long seed = hex2long(cseed);
+        int rand1 = generateMTRandom(seed, 1000000);
+
+        if(rand1 <= 40000) // 40% chance
+            nBonusMultiplier = 2;
+        if(rand1 <= 20000) // 20% chance
+            nBonusMultiplier = 3;
+        if(rand1 <= 12000) // 12% chance
+            nBonusMultiplier = 5;
+        if(rand1 <= 4000) // 4% chance
+            nBonusMultiplier = 10;
+        if(rand1 <= 2000) // 2% chance
+            nBonusMultiplier = 20;
+        if(rand1 <= 1000) // 1% chance
+            nBonusMultiplier = 50;
+        if(rand1 <= 40) // 0.04% chance
+            nBonusMultiplier = 100;
+
+        return (nSubsidy * nBonusMultiplier) + nFees;
+    }
 	
 	return false;
 }
@@ -3114,5 +3143,9 @@ int64_t GetMaxMintProofOfStake(unsigned int time)
     {
         return MAX_MINT_PROOF_OF_STAKE_1;
     }
-    return MAX_MINT_PROOF_OF_STAKE_2;
+    else if (IsBeforeBlock(time, FORK_HEIGHT_12))
+    {
+        return MAX_MINT_PROOF_OF_STAKE_2;
+    }
+    return MAX_MINT_PROOF_OF_STAKE_3;
 }
