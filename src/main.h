@@ -56,7 +56,7 @@ static const unsigned int FORK_TIME_5 = 1450046160; // Sunday, 13 Dec 2015 22:36
 static const int FORK_HEIGHT_9 = 67000;
 static const int FORK_HEIGHT_10 = 70000;
 static const int FORK_HEIGHT_11 = 77000;
-static const int FORK_HEIGHT_12 = 100000; /// pos change to 10%, superblock probability increase. max age to 90 days, zap wallet fix
+static const int FORK_HEIGHT_12 = 90000; /// pos change to 10%, superblock probability increase. max age to 90 days, zap wallet fix
 
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 // Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
