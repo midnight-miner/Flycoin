@@ -8,6 +8,7 @@ INCLUDEPATH += src src/json src/qt /usr/local/include
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
 CONFIG += thread
+CONFIG += c++11
 QT += core gui network widgets
 #greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 lessThan(QT_MAJOR_VERSION, 5): CONFIG += static
@@ -136,7 +137,8 @@ SOURCES += src/txdb-leveldb.cpp \
     src/simd.c \
     src/skein.c \
         src/fugue.c \
-        src/hamsi.c
+        src/hamsi.c \
+    src/masternode.cpp
 
 !win32 {
     # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
@@ -292,7 +294,8 @@ HEADERS += src/qt/bitcoingui.h \
         src/sph_hamsi.h \
     src/sph_types.h \
     src/threadsafety.h \
-    src/txdb-leveldb.h
+    src/txdb-leveldb.h \
+    src/masternode.h
         
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
