@@ -262,6 +262,15 @@ private:
     void operator=(const CNode&);
 public:
 
+    int getMisbehavior()
+    {
+        return nMisbehavior;
+    }
+
+    void setMisbehavior(int x)
+    {
+        nMisbehavior = x;
+    }
 
     int GetRefCount()
     {
