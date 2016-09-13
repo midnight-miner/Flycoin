@@ -6,6 +6,7 @@
 #include "txdb.h"
 #include "walletdb.h"
 #include "bitcoinrpc.h"
+#include "masternode.h"
 #include "net.h"
 #include "init.h"
 #include "util.h"
@@ -963,6 +964,9 @@ bool AppInit2()
     printf("mapWallet.size() = %"PRIszu"\n",       pwalletMain->mapWallet.size());
     printf("mapAddressBook.size() = %"PRIszu"\n",  pwalletMain->mapAddressBook.size());
 
+    ///right before we start the messaging system we should setup our internal masternode control
+    setupFlyNetwork();
+    /// now start the messaging system and other threads
     if (!NewThread(StartNode, NULL))
         InitError(_("Error: could not start node"));
 
