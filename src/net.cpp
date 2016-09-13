@@ -12,6 +12,7 @@
 #include "addrman.h"
 #include "ui_interface.h"
 #include "messages.h"
+#include "masternode.h"
 
 #ifdef WIN32
 #include <string.h>
@@ -56,7 +57,6 @@ static CCriticalSection cs_mapLocalHost;
 static map<CNetAddr, LocalServiceInfo> mapLocalHost;
 static bool vfReachable[NET_MAX] = {};
 static bool vfLimited[NET_MAX] = {};
-static CNode* pnodeLocalHost = NULL;
 CAddress addrSeenByPeer(CService("0.0.0.0", 0), nLocalServices);
 uint64_t nLocalHostNonce = 0;
 boost::array<int, THREAD_MAX> vnThreadsRunning;
@@ -1864,8 +1864,10 @@ void StartNode(void* parg)
         semOutbound = new CSemaphore(nMaxOutbound);
     }
 
-    if (pnodeLocalHost == NULL)
-        pnodeLocalHost = new CNode(INVALID_SOCKET, CAddress(CService("127.0.0.1", 0), nLocalServices));
+    if (myNode == NULL)
+    {
+        createMyNode();
+    }
 
     Discover();
 
