@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
+#include <algorithm>
 #ifdef WIN32
 #include <windows.h>
 #include <wininet.h>
@@ -36,15 +37,14 @@ bool setupFlyNetwork()
     ///check to see if we have enough to be a masternode
     int64_t ourBalance = pwalletMain->GetBalance();
     printf("Our balance is %" PRId64 " satoshi \n", ourBalance);
-    int64_t minimumForMaster = 500 * COIN;
-    printf("Minimum balance for masternode is %" PRId64 " satoshi \n", minimumForMaster);
-    if(ourBalance > minimumForMaster)
+    printf("Minimum balance for masternode is %" PRId64 " satoshi \n", pMasterNodeMain->minimumForMaster);
+    if(ourBalance > pMasterNodeMain->minimumForMaster)
     {
         printf("We are broadcasting as a master node \n");
         /// only setup our masterNode if we qualify to run as a masterNode
         myMasterNode = new CMasterNode(*myNode);
         //Get all our addresses with a balance and add them to our masternodes list of addresses
-        BOOST_FOREACH(set<CTxDestination> grouping, pwalletMain->GetAddressGroupings())
+        BOOST_FOREACH(std::set<CTxDestination> grouping, pwalletMain->GetAddressGroupings())
         {
             BOOST_FOREACH(CTxDestination address, grouping)
             {
@@ -109,15 +109,44 @@ void CMasterNode::updateLastTime()
 
 }
 
+std::vector<std::string> CMasterNode::getNodeAddresses()
+{
+    return masterNodeAddresses;
+}
+
+void CMasterNode::setNodeAddress(std::string addr)
+{
+    masterNodeAddresses.emplace_back(addr);
+}
 
 MasterNodeControl::MasterNodeControl()
 {
     this->masterNodeList.clear();
 }
 
-bool MasterNodeControl::updateMasterNodeList()
-{
 
+bool MasterNodeControl::addToMasterNodeList(CMasterNode node)
+{
+    masterNodeList.emplace_back(&node);
+    return true;
+}
+
+bool MasterNodeControl::removeFromMasterNodeList(CMasterNode node)
+{
+    std::vector<CMasterNode*> listCopy = masterNodeList;
+    masterNodeList.clear();
+    for(unsigned int i = 0; i < listCopy.size(); ++i)
+    {
+        CMasterNode* curNode = listCopy[i];
+        if(curNode->addr == node.addr)
+        {
+        }
+        else
+        {
+            masterNodeList.emplace_back(curNode);
+        }
+    }
+    return true;
 }
 
 std::vector<CMasterNode*> MasterNodeControl::getMasterNodeList()

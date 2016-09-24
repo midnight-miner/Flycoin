@@ -28,6 +28,8 @@ public:
     void addAddressToList(std::string addr);
     bool IsMe();
     void updateLastTime();
+    std::vector<std::string> getNodeAddresses();
+    void setNodeAddress(std::string addr);
 };
 
 
@@ -41,11 +43,12 @@ private:
 
 
 public:
+    static const int64_t minimumForMaster = 500 * COIN;
     MasterNodeControl();
-    bool updateMasterNodeList();
+    bool addToMasterNodeList(CMasterNode node);
+    bool removeFromMasterNodeList(CMasterNode node);
     std::vector<CMasterNode*> getMasterNodeList();
     CMasterNode* selectRandomMasterNode();
-
 };
 
 #endif // MASTERNODE_H
