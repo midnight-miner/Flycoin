@@ -955,6 +955,62 @@ int CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool fUpdate)
     return ret;
 }
 
+int CWallet::ScanForWalletTransactionsMasterNode(CBlockIndex* pindex, bool fUpdate)
+{
+    LOCK(cs_wallet);
+    int ret = 0;
+    int64_t nTotal = 0;
+    CBitcoinAddress referenceaddr = CBitcoinAddress("FQWpk3tdDi1ysB2c6GaoB4CS6toU3brCLC");
+    //std::map<uint256, CWalletTx> mapBalanceWallet;
+    //std::map<uint256, int64_t> mapSpentWallet;
+    {
+        while (pindex)
+        {
+            CBlock block;
+            block.ReadFromDisk(pindex, true);
+            BOOST_FOREACH(CTransaction& tx, block.vtx)
+            {
+                BOOST_FOREACH(const CTxOut& txout, tx.vout)
+                {
+                    if(CBitcoinAddress(txout.scriptPubKey.GetID()).CompareTo(referenceaddr) == 0)
+                    {
+                        nTotal = nTotal + txout.nValue;
+                    }
+                }
+                if(!tx.IsCoinBase())
+                {
+                    BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                    {
+                        COutPoint referenceLocation = txin.prevout;
+                        CTransaction txref;
+                        txref.ReadFromDisk(referenceLocation);
+                        CTxOut outref = txref.vout[txin.prevout.n];
+                        if(CBitcoinAddress(outref.scriptPubKey.GetID()).CompareTo(referenceaddr) == 0)
+                        {
+                            nTotal = nTotal - outref.nValue;
+                        }
+                    }
+                }
+            }
+            pindex = pindex->pnext;
+        }
+        /*
+            for (map<uint256, CWalletTx>::const_iterator it = mapBalanceWallet.begin(); it != mapBalanceWallet.end(); ++it)
+            {
+                const CWalletTx* pcoin = &(*it).second;
+                if (pcoin->IsFinal() && pcoin->IsConfirmed())
+                {
+                    int64_t balanceFound = pcoin->GetAvailableCredit();
+                    printf("tx found a balance to add to the total of %" PRId64 " satoshi \n", balanceFound);
+                    nTotal = nTotal + balanceFound;
+                }
+            }
+        */
+        printf("Balance found from masternode version of scan = %" PRId64 " satoshi \n",nTotal);
+    }
+    return ret;
+}
+
 int CWallet::ScanForWalletTransaction(const uint256& hashTx)
 {
     CTransaction tx;
