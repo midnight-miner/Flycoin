@@ -960,7 +960,7 @@ int CWallet::ScanForWalletTransactionsMasterNode(CBlockIndex* pindex, bool fUpda
     LOCK(cs_wallet);
     int ret = 0;
     int64_t nTotal = 0;
-    CBitcoinAddress referenceaddr = CBitcoinAddress("FQWpk3tdDi1ysB2c6GaoB4CS6toU3brCLC");
+    std::string referenceaddr = "FQWpk3tdDi1ysB2c6GaoB4CS6toU3brCLC";
     //std::map<uint256, CWalletTx> mapBalanceWallet;
     //std::map<uint256, int64_t> mapSpentWallet;
     {
@@ -968,11 +968,14 @@ int CWallet::ScanForWalletTransactionsMasterNode(CBlockIndex* pindex, bool fUpda
         {
             CBlock block;
             block.ReadFromDisk(pindex, true);
+
             BOOST_FOREACH(CTransaction& tx, block.vtx)
             {
                 BOOST_FOREACH(const CTxOut& txout, tx.vout)
                 {
-                    if(CBitcoinAddress(txout.scriptPubKey.GetID()).CompareTo(referenceaddr) == 0)
+                    CTxDestination address;
+                    ExtractDestination(txout.scriptPubKey, address);
+                    if(CBitcoinAddress(address).ToString() == referenceaddr)
                     {
                         nTotal = nTotal + txout.nValue;
                     }
@@ -985,7 +988,9 @@ int CWallet::ScanForWalletTransactionsMasterNode(CBlockIndex* pindex, bool fUpda
                         CTransaction txref;
                         txref.ReadFromDisk(referenceLocation);
                         CTxOut outref = txref.vout[txin.prevout.n];
-                        if(CBitcoinAddress(outref.scriptPubKey.GetID()).CompareTo(referenceaddr) == 0)
+                        CTxDestination address;
+                        ExtractDestination(outref.scriptPubKey, address);
+                        if(CBitcoinAddress(address).ToString() == referenceaddr)
                         {
                             nTotal = nTotal - outref.nValue;
                         }
