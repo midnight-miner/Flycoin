@@ -42,7 +42,7 @@ bool setupFlyNetwork()
     {
         printf("We are broadcasting as a master node \n");
         /// only setup our masterNode if we qualify to run as a masterNode
-        myMasterNode = new CMasterNode(*myNode);
+        myMasterNode = new CMasterNode(myNode->addr);
         //Get all our addresses with a balance and add them to our masternodes list of addresses
         BOOST_FOREACH(std::set<CTxDestination> grouping, pwalletMain->GetAddressGroupings())
         {
@@ -54,37 +54,21 @@ bool setupFlyNetwork()
     }
     return true;
 }
-//SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn = "", bool fInboundIn=false) : vSend(SER_NETWORK, MIN_PROTO_VERSION), vRecv(SER_NETWORK, MIN_PROTO_VERSION
-CMasterNode::CMasterNode(const CNode& node) : CNode(node.hSocket, node.addr, node.addrName, node.fInbound)
+
+CMasterNode::CMasterNode()
 {
     masterNodeAddresses.clear();
     lastReceived = 0;
+    addr = CAddress();
+    lastNonce = 0;
+}
 
-    nServices = node.nServices;
-    nLastSend = node.nLastSend;
-    nLastRecv = node.nLastRecv;
-    nLastSendEmpty = node.nLastSendEmpty;
-    nTimeConnected = node.nTimeConnected;
-    nHeaderStart = node.nHeaderStart;
-    nMessageStart = node.nMessageStart;
-    nVersion = node.nVersion;
-    strSubVer = node.strSubVer;
-    fOneShot = node.fOneShot;
-    fClient = node.fClient; // set by version message
-    fNetworkNode = node.fNetworkNode;
-    fSuccessfullyConnected = node.fSuccessfullyConnected;
-    fDisconnect = node.fDisconnect;
-    nRefCount = node.nRefCount;
-    nReleaseTime = node.nReleaseTime;
-    hashContinue = node.hashContinue;
-    pindexLastGetBlocksBegin = node.pindexLastGetBlocksBegin;
-    hashLastGetBlocksEnd = node.hashLastGetBlocksEnd;
-    nStartingHeight = node.nStartingHeight;
-    fGetAddr = node.fGetAddr;
-    nMisbehavior = node.getMisbehavior();
-    hashCheckpointKnown = node.hashCheckpointKnown;
-    setInventoryKnown.max_size(SendBufferSize() / 1000);
-    setInventoryKnown = node.setInventoryKnown;
+CMasterNode::CMasterNode(CAddress address)
+{
+    masterNodeAddresses.clear();
+    lastReceived = 0;
+    addr = address;
+    lastNonce = 0;
 }
 
 void CMasterNode::addAddressToList(std::string addr)
@@ -104,9 +88,9 @@ bool CMasterNode::IsMe()
     }
 }
 
-void CMasterNode::updateLastTime()
+void CMasterNode::updateLastTime(int64_t time)
 {
-
+    this->lastReceived = time;
 }
 
 std::vector<std::string> CMasterNode::getNodeAddresses()
@@ -119,61 +103,120 @@ void CMasterNode::setNodeAddress(std::string addr)
     masterNodeAddresses.emplace_back(addr);
 }
 
+uint256 CMasterNode::getNonce()
+{
+    return lastNonce;
+}
+
+void CMasterNode::updateLastNonce(uint256 nonce)
+{
+    this->lastNonce = nonce;
+}
+
+CAddress CMasterNode::getAddr()
+{
+    return addr;
+}
+
+
+
+
+
 MasterNodeControl::MasterNodeControl()
 {
     this->masterNodeList.clear();
 }
 
 
-bool MasterNodeControl::addToMasterNodeList(CMasterNode node)
+void MasterNodeControl::addToMasterNodeList(CMasterNode node, int64_t time, uint256 nonce)
 {
-    masterNodeList.emplace_back(&node);
-    return true;
+    node.updateLastNonce(nonce);
+    node.updateLastTime(time);
+    masterNodeList.emplace_back(node);
 }
 
 bool MasterNodeControl::removeFromMasterNodeList(CMasterNode node)
 {
-    std::vector<CMasterNode*> listCopy = masterNodeList;
+    bool hadNode = false;
+    std::vector<CMasterNode> listCopy = masterNodeList;
     masterNodeList.clear();
     for(unsigned int i = 0; i < listCopy.size(); ++i)
     {
-        CMasterNode* curNode = listCopy[i];
-        if(curNode->addr == node.addr)
+        CMasterNode curNode = listCopy[i];
+        if(curNode.getAddr() == node.getAddr()) //compare ip addresses
         {
+            hadNode = true; /// shows that we had the node in the first place
+            /// do nothing, not adding to new list
         }
         else
         {
             masterNodeList.emplace_back(curNode);
         }
     }
-    return true;
+    return hadNode;
 }
 
-std::vector<CMasterNode*> MasterNodeControl::getMasterNodeList()
+std::vector<CMasterNode> MasterNodeControl::getMasterNodeList()
 {
     return this->masterNodeList;
 }
 
-CMasterNode* MasterNodeControl::selectRandomMasterNode()
+CMasterNode MasterNodeControl::selectRandomMasterNode()
 {
     begin:
     unsigned int totalKnownNodes = this->masterNodeList.size();
     int random = GetRandInt(2147483646); // one less than the max value possible for an int.
     /// use mod math so random is guarenteed to be in the acceptable range
     int nodeIndex = random%(totalKnownNodes - 1); // must subtract one from the total because indicies start at 0 not 1
-    CMasterNode* selectedNode = this->masterNodeList[nodeIndex];
+    CMasterNode selectedNode = this->masterNodeList[nodeIndex];
 
     //Perform a series of checks to see if the selected node is valid
-    if(selectedNode->IsMe())
+    if(selectedNode.IsMe())
     {
         //cant send coins to myself for a masternode reward
         goto begin; /// you lovin that goto swag arent u? yeah. uk u are
     }
-    if(selectedNode->getMisbehavior() > 10)
-    {
-        //select a new node if the selected one is being naughty.
-        goto begin;
-    }
 
     return selectedNode;
+}
+
+bool MasterNodeControl::contains(CMasterNode node)
+{
+    for( unsigned int i = 0; i < masterNodeList.size(); ++i)
+    {
+        CMasterNode curNode = masterNodeList[i];
+        if(curNode.getAddr() == node.getAddr())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+unsigned int MasterNodeControl::getlocation(CMasterNode node)
+{
+    for( unsigned int i = 0; i < masterNodeList.size(); ++i)
+    {
+        CMasterNode curNode = masterNodeList[i];
+        if(curNode.getAddr() == node.getAddr())
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void MasterNodeControl::updateNodeTime(unsigned int location, int64_t newTime)
+{
+    masterNodeList[location].updateLastTime(newTime);
+}
+
+void MasterNodeControl::updateNodeNonce(unsigned int location, uint256 nonce)
+{
+    masterNodeList[location].updateLastNonce(nonce);
+}
+
+uint256 MasterNodeControl::getNodesNonce(unsigned int loc)
+{
+    return masterNodeList[loc].getNonce();
 }

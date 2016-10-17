@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "uint256.h"
 #include "net.h"
 
 class CMasterNode;
@@ -17,19 +18,38 @@ extern void createMyNode();
 
 /// The MasterNode is an extension off of a regular CNode peer that keeps the info needed for syncing masternode lists among the network
 /// Our MasterNode information is held in the myMasterNode variable;
-class CMasterNode : public CNode
+class CMasterNode
 {    
 private:
     std::vector<std::string> masterNodeAddresses; // the list of all addresses in a wallet that have a balance that counts towards masternodes, default is all
-    int64_t lastReceived; /// the last time a payment was received for this master node
+    int64_t lastReceived; /// the last time an update was received for this flynode
+    CAddress addr;
+    uint256 lastNonce;
 
 public:
-    CMasterNode(const CNode &node);
+    CMasterNode();
+    CMasterNode(CAddress address);
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(masterNodeAddresses);
+        READWRITE(lastReceived);
+        READWRITE(addr);
+        READWRITE(lastNonce);
+    )
+
+    friend bool operator==(const CMasterNode& a, const CMasterNode& b)
+    {
+        return (a.getAddr() == b.getAddr());
+    }
     void addAddressToList(std::string addr);
     bool IsMe();
-    void updateLastTime();
+    void updateLastTime(int64_t time);
     std::vector<std::string> getNodeAddresses();
     void setNodeAddress(std::string addr);
+    uint256 getNonce();
+    void updateLastNonce(uint256 nonce);
+    CAddress getAddr();
 };
 
 
@@ -39,16 +59,21 @@ public:
 class MasterNodeControl
 {
 private:
-    std::vector<CMasterNode*> masterNodeList;/// the list of all known active masterNodes
+    std::vector<CMasterNode> masterNodeList;/// the list of all known active masterNodes
 
 
 public:
     static const int64_t minimumForMaster = 500 * COIN;
     MasterNodeControl();
-    bool addToMasterNodeList(CMasterNode node);
+    void addToMasterNodeList(CMasterNode node, int64_t time, uint256 nonce);
     bool removeFromMasterNodeList(CMasterNode node);
-    std::vector<CMasterNode*> getMasterNodeList();
-    CMasterNode* selectRandomMasterNode();
+    std::vector<CMasterNode> getMasterNodeList();
+    CMasterNode selectRandomMasterNode();
+    bool contains(CMasterNode node);
+    unsigned int getlocation(CMasterNode node);
+    void updateNodeTime(unsigned int location, int64_t newTime);
+    void updateNodeNonce(unsigned int location, uint256 nonce);
+    uint256 getNodesNonce(unsigned int loc);
 };
 
 #endif // MASTERNODE_H

@@ -1,10 +1,13 @@
 #include "messages.h"
+#include "masternode.h"
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+
+#include <openssl/err.h>
 
 using namespace std;
 using namespace boost;
@@ -44,6 +47,67 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
     }
     // Don't know what it is, just say we already got one
     return true;
+}
+
+
+
+// Some functions for FlyNodes
+
+bool BroadcastMyNode()
+{
+    std::vector<CNode*> vNodesCopy;
+    {
+        LOCK(cs_vNodes);
+        vNodesCopy = vNodes;
+    }
+    unsigned char nonce[16];
+    int rc = RAND_bytes(nonce, sizeof(nonce));
+    unsigned long err = ERR_get_error();
+    if(rc != 1)
+    {
+        return error("generating nonce in BroadcastMyNode FAILED!!!! error code: %lu \n", err);
+    }
+
+    std::vector<unsigned char> vNonce;
+    vNonce.resize(16);
+    for(int i = 0; i < 16; ++i)
+    {
+        vNonce[i] = nonce[i];
+    }
+    vNonce.shrink_to_fit();
+    uint256 sNonce(vNonce);
+
+    BOOST_FOREACH(CNode* pnode, vNodesCopy)
+    {
+        pnode->PushMessage("myNode", *myMasterNode, GetTime(), sNonce);
+    }
+    return true;
+}
+
+void ForwardMyNode(CMasterNode node, int64_t time, uint256 nonce)
+{
+    std::vector<CNode*> vNodesCopy;
+    {
+        LOCK(cs_vNodes);
+        vNodesCopy = vNodes;
+    }
+    BOOST_FOREACH(CNode* pnode, vNodesCopy)
+    {
+        pnode->PushMessage("myNode", node, time, nonce);
+    }
+}
+
+void ForwardRemoveMe(CMasterNode node)
+{
+    std::vector<CNode*> vNodesCopy;
+    {
+        LOCK(cs_vNodes);
+        vNodesCopy = vNodes;
+    }
+    BOOST_FOREACH(CNode* pnode, vNodesCopy)
+    {
+        pnode->PushMessage("removeme", node);
+    }
 }
 
 
@@ -726,6 +790,118 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             }
         }
     }
+	
+	/// The next 7 messages are used in the flynode system
+	else if(strCommand == "mynode")	// advertise my node, used when i get over 500 coins in my address totals or when i first come online with a high enough balance
+	{
+		/// if node not in list, add to list
+		/// if node in list, reset its alive timer to the timestamp (assuming timestamp is not in the future)
+		/// we should receive this message if a reqalive was sent by someone or the timer for the node these addresses belong to thinks its time to update us.
+        CMasterNode recvNode;
+        vRecv >> recvNode;
+        int64_t myNodeTime;
+        vRecv >> myNodeTime;
+        uint256 recvNonce;
+        vRecv >> recvNonce;
+        if(pMasterNodeMain->contains(recvNode))
+        {
+            unsigned int recvLoc = pMasterNodeMain->getlocation(recvNode);
+            uint256 myNonce = pMasterNodeMain->getNodesNonce(recvLoc);
+            if(myNonce != recvNonce)
+            {
+                pMasterNodeMain->updateNodeTime(recvLoc, myNodeTime);
+                pMasterNodeMain->updateNodeNonce(recvLoc, recvNonce);
+                ForwardMyNode(recvNode, myNodeTime, recvNonce);
+            }
+            else
+            {
+                /// do nothing to prevent broadcast storm
+            }
+        }
+        else
+        {
+            pMasterNodeMain->addToMasterNodeList(recvNode, myNodeTime, recvNonce);
+            ForwardMyNode(recvNode, myNodeTime, recvNonce);
+        }
+	}
+
+	else if(strCommand == "getlist") // the list of flynodes from a peer
+	{
+		/// respond with a sendlist message that contains the list of flynodes that we have
+
+        std::vector<CMasterNode> nodeList = pMasterNodeMain->getMasterNodeList();
+        pfrom->PushMessage("sendList", nodeList);
+	}
+
+	else if(strCommand == "sendlist") // send my flynode list upon request
+	{
+		/// deserialize the list of flynodes received, if we do not have a list set this list as our list, otherwise compare with our list to see if they match and update times for those nodes
+        std::vector<CMasterNode> recvList;
+        vRecv >> recvList;
+
+        std::vector<CMasterNode> myList = pMasterNodeMain->getMasterNodeList();
+
+        for(std::vector<int>::size_type i = 0; i != recvList.size(); i++)
+        {
+            CMasterNode recvNode = recvList[i];
+            bool contains = false;
+            int loc = -1;
+            for(std::vector<int>::size_type j = 0; j != myList.size(); j++)
+            {
+                CMasterNode listNode = myList[j];
+                if(recvNode == listNode)
+                {
+                    loc = j;
+                    contains = true;
+                    break;
+                }
+            }
+            if(contains == true)
+            {
+                pMasterNodeMain->updateNodeTime(loc, GetTime());
+                pMasterNodeMain->updateNodeNonce(loc, recvNode.getNonce());
+            }
+            else
+            {
+                pMasterNodeMain->addToMasterNodeList(recvNode, GetTime(), recvNode.getNonce());
+            }
+        }
+
+	}
+
+	else if(strCommand == "reqalive") // request alive status of a flynode, this is used when seleting a node to pay out to and once every 8 min to check if node is still alive
+	{
+        CMasterNode recvNode;
+        vRecv >> recvNode;
+
+        if(recvNode.IsMe())
+        {
+            BroadcastMyNode();
+        }
+	}
+
+	else if(strCommand == "removeme") // will send this message if coins are sent that put my accounts balance under 500. keeps node list up to date, saves time 
+	{
+		/// request to be removed from the node list, send with nonce, if this wasnt the last nonce we saw we fwd this message along.
+        CMasterNode recvNode;
+        vRecv >> recvNode;
+        bool forward = pMasterNodeMain->removeFromMasterNodeList(recvNode);
+        if(forward)
+        {
+            ForwardRemoveMe(recvNode);
+        }
+	}
+
+	else if(strCommand == "invalidbal") // send if we calculate the balance of a node to be less than the minimum upon new node being added to the list, peers receiving should fwd if we agree
+	{
+		/// recalculate the balance for the nodes ourselves, see if this message was rightfully sent. if it was then we fwd it along, if not respond with recheckbal
+	}
+	
+	else if(strCommand == "recheckbal") // send if we get invalidbal yet calculate the balance to be valid
+	{
+		/// recalculae the balance for the node in question as others seem to think it is valid, if we get this back and still cant calculate the nodes balance to be valid, we remove from our own list quietly
+	}
+
 
 
     else
