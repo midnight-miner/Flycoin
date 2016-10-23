@@ -1250,19 +1250,19 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
         long seed = hex2long(cseed);
         int rand1 = generateMTRandom(seed, 1000000);
 
-        if(rand1 <= 5000 * 2) // 10% chance
+        if(rand1 <= 100000) // 10% chance
             nBonusMultiplier = 2;
-        if(rand1 <= 2500 * 2) // 5% chance
+        if(rand1 <= 50000) // 5% chance
             nBonusMultiplier = 3;
-        if(rand1 <= 1500 * 2) // ~3% chance
+        if(rand1 <= 30000) // 3% chance
             nBonusMultiplier = 5;
-        if(rand1 <= 500 * 2) // 1% chance
+        if(rand1 <= 10000) // 1% chance
             nBonusMultiplier = 10;
-        if(rand1 <= 250 * 2) // 0.5% chance
+        if(rand1 <= 5000) // 0.5% chance
             nBonusMultiplier = 20;
-        if(rand1 <= 125 * 2) // 0.25% chance
+        if(rand1 <= 2500) // 0.25% chance
             nBonusMultiplier = 50;
-        if(rand1 <= 5 * 2) // 0.01% chance
+        if(rand1 <= 100) // 0.01% chance
             nBonusMultiplier = 100;
 
         if (fDebug && GetBoolArg("-printcreation"))
