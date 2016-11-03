@@ -79,7 +79,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
 			int64_t nRewardMultiplier = 1;
 			int64_t nFees = wtx.GetValueOut() - nDebit - pindex->nMint;
 
-			int64_t nReward = GetProofOfStakeReward(nCoinAge, pindex->nBits, wtx.nTime, nFees, nDebit, prevHash, nRewardMultiplier);
+            int64_t nReward = GetProofOfStakeReward(nCoinAge, pindex->nBits, wtx.nTime, nFees, nDebit, prevHash, nRewardMultiplier, pDestination);
 			int64_t nBaseReward = nReward / nRewardMultiplier;
 			
 			if(nRewardMultiplier > 1)

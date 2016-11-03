@@ -13,6 +13,7 @@
 #include "script.h"
 #include "scrypt.h"
 #include "hashblock.h"
+#include "stakereward.h"
 #include <list>
 
 class CWallet;
@@ -40,23 +41,23 @@ static const int64_t MIN_TX_FEE_V2 = 0 * COIN;
 static const int64_t MIN_RELAY_TX_FEE = MIN_TX_FEE;
 static const int64_t MIN_RELAY_TX_FEE_V2 = MIN_TX_FEE_V2;
 static const int64_t MAX_MONEY = 5000000 * COIN;
-static const int64_t MAX_MINT_PROOF_OF_STAKE_1 = 50 * CENT; // 50% per year
-static const int64_t MAX_MINT_PROOF_OF_STAKE_2 = 35 * CENT; // 35% per year
-static const int64_t MAX_MINT_PROOF_OF_STAKE_3 = 10 * CENT; // 10% per year
-static const int64_t MAX_MINT_PROOF_OF_STAKE_PARTICIPATION = 350; // 35% per year
+// JD static const int64_t MAX_MINT_PROOF_OF_STAKE_1 = 50 * CENT; // 50% per year
+// JD static const int64_t MAX_MINT_PROOF_OF_STAKE_2 = 35 * CENT; // 35% per year
+// JD static const int64_t MAX_MINT_PROOF_OF_STAKE_3 = 10 * CENT; // 10% per year
+// JD static const int64_t MAX_MINT_PROOF_OF_STAKE_PARTICIPATION = 350; // 35% per year
 static const int MAX_TIME_SINCE_BEST_BLOCK = 10; // how many seconds to wait before sending next PushGetBlocks()
 static const int MODIFIER_INTERVAL_SWITCH = 100;
 
-static const unsigned int BLOCK_SWITCH_TIME = 1435708800; // 07/01/2015 @ 12:00am (UTC)
-static const unsigned int FORK_TIME = 1444752000; // (GMT): Tue, 13 Oct 2015 16:00:00 GMT
-static const unsigned int FORK_TIME_2 = 1446915600; // Sat, 07 Nov 2015 17:00:00 GMT
-static const unsigned int FORK_TIME_3 = 1447278900; // Wednesday, 11 Nov 2015 21:55:00 GMT //keesdewit
-static const unsigned int FORK_TIME_4 = 1448211600; // Sunday, 22 Nov 2015 17:00:00 GMT //keesdewit
-static const unsigned int FORK_TIME_5 = 1450046160; // Sunday, 13 Dec 2015 22:36:00 GMT //keesdewit
-static const int FORK_HEIGHT_9 = 67000;
-static const int FORK_HEIGHT_10 = 70000;
-static const int FORK_HEIGHT_11 = 77000;
-static const int FORK_HEIGHT_12 = 90000; /// pos change to 10%, superblock probability increase. max age to 90 days, zap wallet fix
+// JD static const unsigned int BLOCK_SWITCH_TIME = 1435708800; // 07/01/2015 @ 12:00am (UTC)
+// JD static const unsigned int FORK_TIME = 1444752000; // (GMT): Tue, 13 Oct 2015 16:00:00 GMT
+// JD static const unsigned int FORK_TIME_2 = 1446915600; // Sat, 07 Nov 2015 17:00:00 GMT
+// JD static const unsigned int FORK_TIME_3 = 1447278900; // Wednesday, 11 Nov 2015 21:55:00 GMT //keesdewit
+// JD static const unsigned int FORK_TIME_4 = 1448211600; // Sunday, 22 Nov 2015 17:00:00 GMT //keesdewit
+// JD static const unsigned int FORK_TIME_5 = 1450046160; // Sunday, 13 Dec 2015 22:36:00 GMT //keesdewit
+// JD static const int FORK_HEIGHT_9 = 67000;
+// JD static const int FORK_HEIGHT_10 = 70000;
+// JD static const int FORK_HEIGHT_11 = 77000;
+// JD static const int FORK_HEIGHT_12 = 90000; /// pos change to 10%, superblock probability increase. max age to 90 days, zap wallet fix
 
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 // Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
@@ -145,7 +146,7 @@ bool LoadExternalBlockFile(FILE* fileIn);
 bool CheckProofOfWork(uint256 hash, unsigned int nBits);
 unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfStake);
 int64_t GetProofOfWorkReward(int64_t nFees);
-int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int nTime, int64_t nFees, int64_t nValueIn, uint256 prevHash, int64_t& nBonusMultiplier);
+int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int nTime, int64_t nFees, int64_t nValueIn, uint256 prevHash, int64_t& nBonusMultiplier, CTxDestination pDestination);
 unsigned int ComputeMinWork(unsigned int nBase, int64_t nTime);
 unsigned int ComputeMinStake(unsigned int nBase, int64_t nTime, unsigned int nBlockTime);
 int GetNumBlocksOfPeers();
@@ -173,7 +174,7 @@ bool GetTransaction(const uint256& hashTx, CWalletTx& wtx);
 // Misc utilities
 //
 
-int64_t GetMaxMintProofOfStake(unsigned int time);
+// JD int64_t GetMaxMintProofOfStake(unsigned int time);
 
 bool GetWalletFile(CWallet* pwallet, std::string &strWalletFileOut);
 

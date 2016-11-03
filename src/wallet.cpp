@@ -12,6 +12,7 @@
 #include "base58.h"
 #include "kernel.h"
 #include "coincontrol.h"
+#include "stakereward.h"
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/range/algorithm.hpp>
@@ -2281,7 +2282,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 			nCredit += pcoin.first->vout[pcoin.second].nValue;
 			vwtxPrev.push_back(pcoin.first);
 			txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
-            int64_t maxMint = GetMaxMintProofOfStake(txNew.nTime);
+            int64_t maxMint = StakeReward::GetMaxMintProofOfStake(txNew.nTime);
             uint64_t nTotalSize = pcoin.first->vout[pcoin.second].nValue * (1+((txNew.nTime - block.GetBlockTime()) / (60*60*24)) * (maxMint / COIN / 365));
 			//presstab HyperStake
 			//if MultiSend is set to send in coinstake we will add our outputs here (values asigned further down)
@@ -2323,7 +2324,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
             return error("CreateCoinStake : failed to calculate coin age");
 
         int64_t nBonusMultiplier = 1;
-        nReward = GetProofOfStakeReward(nCoinAge, nBits, txNew.nTime, nFees, nCredit, prevHash, nBonusMultiplier);
+        nReward = GetProofOfStakeReward(nCoinAge, nBits, txNew.nTime, nFees, nCredit, prevHash, nBonusMultiplier, pDestination);
         if (nReward <= 0)
             return false;
 
