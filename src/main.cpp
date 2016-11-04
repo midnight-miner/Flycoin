@@ -1117,7 +1117,7 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
 {
 
     int64_t nBonusSubsidy = 0;
-    int64_t nBonusMultiplier = 1;
+//    int64_t nBonusMultiplier = 1;
 
 //    int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
 //    int64_t nSubsidy = StakeReward::GetStakeInterest(pDestination, nTime ); // Retrieve Stake after Fork_12
@@ -3187,7 +3187,7 @@ string GetWarnings(string strFor)
 //
 // Misc utilities
 //
-/* JD
+/* JD - Moved to stakereward.cpp
 int64_t GetMaxMintProofOfStake(unsigned int time)
 {
     if(IsBeforeBlock(time, FORK_HEIGHT_9))

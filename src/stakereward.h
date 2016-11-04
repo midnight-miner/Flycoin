@@ -41,7 +41,7 @@ public:
 
 // public slots:
 private:
-    static int generateMTRandom(unsigned int s, int range);
+//    static int generateMTRandom(unsigned int s, int range);
     static bool IsBeforeBlock(unsigned int nTime, int nHeightOfFork);
     static bool IsAfterBlock(unsigned int nTime, int nHeightOfFork);
 };

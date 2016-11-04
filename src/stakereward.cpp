@@ -7,7 +7,7 @@
 
 using namespace boost;
 
-int static StakeReward::generateMTRandom(unsigned int s, int range)
+int static generateMTRandom(unsigned int s, int range)
 {
     random::mt19937 gen(s);
     random::uniform_int_distribution<> dist(0, range);
@@ -198,6 +198,7 @@ int64_t StakeReward::GetMaxMintProofOfStake(unsigned int time)
 int64_t StakeReward::GetBonusReward(unsigned int nTime, int64_t nValueIn, uint256 prevHash)
 {
     int64_t nBonusSubsidy = 0;
+    int64_t nBonusMultiplier = 1;
 
     if(nTime < FORK_TIME) //old superblock reward
     {
@@ -236,7 +237,7 @@ int64_t StakeReward::GetBonusReward(unsigned int nTime, int64_t nValueIn, uint25
     long seed = hex2long(cseed);
     int rand1 = generateMTRandom(seed, 1000000);
 
-    nBonusMultiplier = 1;
+
 
 
     if (nTime < FORK_TIME_2) //new superblock reward
@@ -321,9 +322,9 @@ int64_t StakeReward::GetBonusReward(unsigned int nTime, int64_t nValueIn, uint25
     }
     else if(IsBeforeBlock(nTime, FORK_HEIGHT_12))
     {
-        int64_t nMinimumStakeHours = nStakeMinAge / 60 / 60;
+//        int64_t nMinimumStakeHours = nStakeMinAge / 60 / 60;
 
-        int64_t nSubsidy = nCoinAge * MAX_MINT_PROOF_OF_STAKE_PARTICIPATION / 365 / nMinimumStakeHours;
+//        int64_t nSubsidy = nCoinAge * MAX_MINT_PROOF_OF_STAKE_PARTICIPATION / 365 / nMinimumStakeHours;
         nBonusMultiplier = 1;
 
         //super block calculations from breakcoin
@@ -352,8 +353,8 @@ int64_t StakeReward::GetBonusReward(unsigned int nTime, int64_t nValueIn, uint25
     }
     else
     {
-        CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
-        int64_t nSubsidy = bnSubsidy.getuint64();
+//        CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
+//        int64_t nSubsidy = bnSubsidy.getuint64();
         nBonusMultiplier = 1;
 
         //super block calculations from breakcoin

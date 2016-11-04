@@ -3,7 +3,7 @@ macx{
 }
 TEMPLATE = app
 TARGET = FlyCoin-qt
-VERSION = 2.3
+VERSION = 2.4.5
 INCLUDEPATH += src src/json src/qt /usr/local/include
 DEFINES += QT_GUI BOOST_THREAD_USE_LIB BOOST_SPIRIT_THREADSAFE
 CONFIG += no_include_pwd
@@ -136,7 +136,8 @@ SOURCES += src/txdb-leveldb.cpp \
     src/simd.c \
     src/skein.c \
         src/fugue.c \
-        src/hamsi.c
+        src/hamsi.c \
+    src/stakereward.cpp
 
 !win32 {
     # we use QMAKE_CXXFLAGS_RELEASE even without RELEASE=1 because we use RELEASE to indicate linking preferences not -O preferences
@@ -292,7 +293,8 @@ HEADERS += src/qt/bitcoingui.h \
         src/sph_hamsi.h \
     src/sph_types.h \
     src/threadsafety.h \
-    src/txdb-leveldb.h
+    src/txdb-leveldb.h \
+    src/stakereward.h
         
 
 SOURCES += src/qt/bitcoin.cpp src/qt/bitcoingui.cpp \
