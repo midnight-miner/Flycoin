@@ -116,6 +116,8 @@ CTxDB::CTxDB(const char* pszMode)
         fReadOnly = false;
         WriteVersion(DATABASE_VERSION);
         fReadOnly = fTmp;
+        printf("Create index version is %d, no database exists\n", DATABASE_VERSION); // MidnightMiner - added for debugging.
+
     }
 
     printf("Opened LevelDB successfully\n");

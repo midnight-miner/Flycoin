@@ -129,42 +129,21 @@ StakeLevel StakeReward::GetStakeLevel(CTxDestination address)
 
 int64_t StakeReward::GetStakeInterest(CTxDestination address, int height)
 {
-    if (height >= FORK_HEIGHT_13)
-        return MAX_MINT_PROOF_OF_STAKE_3;
-
-    if (height >= FORK_HEIGHT_12)
+    if(IsBeforeBlock(time, FORK_HEIGHT_9))
+    {
+        return MAX_MINT_PROOF_OF_STAKE_1;
+    }
+    else if (IsBeforeBlock(time, FORK_HEIGHT_12))
+    {
+        return MAX_MINT_PROOF_OF_STAKE_2;
+    }
+    else if (IsBeforeBlock(time, FORK_HEIGHT_13))
+    {
         return GetStakeInterestV12(address, height);
-
-    if (height >= FORK_HEIGHT_11)
-        return MAX_MINT_PROOF_OF_STAKE_2; // Standard 35% annual interest
-
-    if (height >= FORK_HEIGHT_10)
-        return MAX_MINT_PROOF_OF_STAKE_2; // Standard 35% annual interest
-
-    if (height >= FORK_HEIGHT_9)
-        return MAX_MINT_PROOF_OF_STAKE_2; // Standard 35% annual interest
-
+    }
     else
-        return  MAX_MINT_PROOF_OF_STAKE_1;  // Standard 50% annual interest
-
-
+        return MAX_MINT_PROOF_OF_STAKE_3;
 }
-
-int64_t StakeReward::GetStakeInterestV9(CTxDestination address, int height)
-{
-            return MAX_MINT_PROOF_OF_STAKE_2; // Standard 35% annual interest
-}
-
-int64_t StakeReward::GetStakeInterestV10(CTxDestination address, int height)
-{
-            return MAX_MINT_PROOF_OF_STAKE_2; // Standard 35% annual interest
-}
-
-int64_t StakeReward::GetStakeInterestV11(CTxDestination address, int height)
-{
-    return MAX_MINT_PROOF_OF_STAKE_2; // Standard 35% annual interest
-}
-
 
 int64_t StakeReward::GetStakeInterestV12(CTxDestination address, int height)
 {

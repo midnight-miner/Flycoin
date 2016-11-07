@@ -1117,45 +1117,13 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
 {
 
     int64_t nBonusSubsidy = 0;
-//    int64_t nBonusMultiplier = 1;
-
-//    int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
-//    int64_t nSubsidy = StakeReward::GetStakeInterest(pDestination, nTime ); // Retrieve Stake after Fork_12
-//    int64_t nBonusSubsidy = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
-
+    int64_t nRewardCoinYear = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_X
 
     if(nTime < FORK_TIME) //old superblock reward
 	{
-/* JD - moved to stakereward.cpp
- * 		int64_t nSubsidy = nCoinAge * nRewardCoinYear / 365 / COIN;
-		int64_t nBonusSubsidy = 0;
-		//super block calculations from breakcoin
-		std::string cseed_str = prevHash.ToString().substr(7,7);
-		const char* cseed = cseed_str.c_str();
-		long seed = hex2long(cseed);
-		int rand1 = generateMTRandom(seed, 100);
-		int rand2 = generateMTRandom(seed+1, 100);
-		int rand3 = generateMTRandom(seed+2, 100);
-		int rand4 = generateMTRandom(seed+3, 100);
-		int rand5 = generateMTRandom(seed+4, 100);
-		int64_t inputcoins = nValueIn / COIN;
-		
-		if (inputcoins >= 25000) 
-		{
-			if(rand1 <= 5)
-				nBonusSubsidy += 1 * COIN;
-			if(rand2 <= 4)
-				nBonusSubsidy += 2 * COIN;
-			if(rand3 <= 3)
-				nBonusSubsidy += 3 * COIN;
-			if(rand4 <= 2)
-				nBonusSubsidy += 5 * COIN;
-			if(rand5 <= 1)
-				nBonusSubsidy += 10 * COIN;
-        }
-        */
-        int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
+
         int64_t nBonusSubsidy = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
+        int64_t nSubsidy = nCoinAge * nRewardCoinYear / 365 / COIN;
 
 		if (fDebug && GetBoolArg("-printcreation"))
             printf("GetProofOfStakeReward(): create=%s + bonus=%s nCoinAge=%"PRId64" nBits=%d\n", FormatMoney(nSubsidy).c_str(), FormatMoney(nBonusMultiplier).c_str(), nCoinAge, nBits);
@@ -1164,31 +1132,9 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
 	}
 	else if (nTime < FORK_TIME_2) //new superblock reward
 	{
-        /* JD - moved to stakereward.cpp
-         *
 		CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
 		int64_t nSubsidy = bnSubsidy.getuint64();
-		nBonusMultiplier = 1;
 		
-		//super block calculations from breakcoin
-		std::string cseed_str = prevHash.ToString().substr(7,7);
-		const char* cseed = cseed_str.c_str();
-		long seed = hex2long(cseed);
-		int rand1 = generateMTRandom(seed, 1000000);
-
-		if(rand1 <= 500) // 0.5% chance
-			nBonusMultiplier = 2;
-		if(rand1 <= 400) // 0.4% chance
-			nBonusMultiplier = 3;
-		if(rand1 <= 90) // 0.09% chance
-			nBonusMultiplier = 5;
-		if(rand1 <= 9) // 0.009% chance
-			nBonusMultiplier = 10;
-		if(rand1 <= 1) // 0.0001% chance
-			nBonusMultiplier = 20;
-            */
-			
-        int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
         int64_t nBonusMultiplier = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
 
         if (fDebug && GetBoolArg("-printcreation"))
@@ -1198,31 +1144,9 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
     }
     else if(IsBeforeBlock(nTime, FORK_HEIGHT_9))
     {
-        /* JD - moved to stakereward.cpp
-         *
 		CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
 		int64_t nSubsidy = bnSubsidy.getuint64();
-		nBonusMultiplier = 1;
 		
-		//super block calculations from breakcoin
-		std::string cseed_str = prevHash.ToString().substr(7,7);
-		const char* cseed = cseed_str.c_str();
-		long seed = hex2long(cseed);
-		int rand1 = generateMTRandom(seed, 1000000);
-
-        if(rand1 <= 500 * 2) // 1% chance
-            nBonusMultiplier = 2;
-		if(rand1 <= 400 * 2) // 0.8% chance
-			nBonusMultiplier = 3;
-		if(rand1 <= 90 * 2) // 0.18% chance
-			nBonusMultiplier = 5;
-		if(rand1 <= 9 * 2) // 0.018% chance
-			nBonusMultiplier = 10;
-		if(rand1 <= 1 * 2) // 0.0002% chance
-			nBonusMultiplier = 20;
-            */
-
-        int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
         int64_t nBonusMultiplier = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
 
         if (fDebug && GetBoolArg("-printcreation"))
@@ -1232,35 +1156,9 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
     }
     else if (pindexBest->nHeight <= FORK_HEIGHT_11)
     {
-        /* JD - moved to stakereward.cpp
-         *
         CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
         int64_t nSubsidy = bnSubsidy.getuint64();
-        nBonusMultiplier = 1;
 
-        //super block calculations from breakcoin
-        std::string cseed_str = prevHash.ToString().substr(7,7);
-        const char* cseed = cseed_str.c_str();
-        long seed = hex2long(cseed);
-        int rand1 = generateMTRandom(seed, 1000000);
-
-        if(rand1 <= 5000 * 2) // 10% chance
-            nBonusMultiplier = 2;
-        if(rand1 <= 2500 * 2) // 5% chance
-            nBonusMultiplier = 3;
-        if(rand1 <= 1500 * 2) // ~3% chance
-            nBonusMultiplier = 5;
-        if(rand1 <= 500 * 2) // 1% chance
-            nBonusMultiplier = 10;
-        if(rand1 <= 250 * 2) // 0.5% chance
-            nBonusMultiplier = 20;
-        if(rand1 <= 125 * 2) // 0.25% chance
-            nBonusMultiplier = 50;
-        if(rand1 <= 5 * 2) // 0.01% chance
-            nBonusMultiplier = 100;
-            */
-
-        int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
         int64_t nBonusSubsidy = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
 
         if (fDebug && GetBoolArg("-printcreation"))
@@ -1270,36 +1168,10 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
     } 
     else if(IsBeforeBlock(nTime, FORK_HEIGHT_12))
 	{
-        /* JD - moved to stakereward.cpp
-         *
 		int64_t nMinimumStakeHours = nStakeMinAge / 60 / 60;
 		
         int64_t nSubsidy = nCoinAge * MAX_MINT_PROOF_OF_STAKE_PARTICIPATION / 365 / nMinimumStakeHours;
-        nBonusMultiplier = 1;
 
-        //super block calculations from breakcoin
-        std::string cseed_str = prevHash.ToString().substr(7,7);
-        const char* cseed = cseed_str.c_str();
-        long seed = hex2long(cseed);
-        int rand1 = generateMTRandom(seed, 1000000);
-
-        if(rand1 <= 5000 * 2) // 10% chance
-            nBonusMultiplier = 2;
-        if(rand1 <= 2500 * 2) // 5% chance
-            nBonusMultiplier = 3;
-        if(rand1 <= 1500 * 2) // ~3% chance
-            nBonusMultiplier = 5;
-        if(rand1 <= 500 * 2) // 1% chance
-            nBonusMultiplier = 10;
-        if(rand1 <= 250 * 2) // 0.5% chance
-            nBonusMultiplier = 20;
-        if(rand1 <= 125 * 2) // 0.25% chance
-            nBonusMultiplier = 50;
-        if(rand1 <= 5 * 2) // 0.01% chance
-            nBonusMultiplier = 100;
-            */
-
-        int64_t nSubsidy = StakeReward::GetMaxMintProofOfStake(nTime);  // Retrieve Stake before Fork_12
         int64_t nBonusMultiplier = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
 
         if (fDebug && GetBoolArg("-printcreation"))
@@ -1309,35 +1181,9 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
 	}
     else
     {
-        /* JD - moved to stakereward.cpp
-         *
         CBigNum bnSubsidy = CBigNum(nCoinAge) * nRewardCoinYear / 365 / COIN;
         int64_t nSubsidy = bnSubsidy.getuint64();
-        nBonusMultiplier = 1;
 
-        //super block calculations from breakcoin
-        std::string cseed_str = prevHash.ToString().substr(7,7);
-        const char* cseed = cseed_str.c_str();
-        long seed = hex2long(cseed);
-        int rand1 = generateMTRandom(seed, 1000000);
-
-        if(rand1 <= 400000) // 40% chance
-            nBonusMultiplier = 2;
-        if(rand1 <= 200000) // 20% chance
-            nBonusMultiplier = 3;
-        if(rand1 <= 120000) // 12% chance
-            nBonusMultiplier = 5;
-        if(rand1 <= 40000) // 4% chance
-            nBonusMultiplier = 10;
-        if(rand1 <= 20000) // 2% chance
-            nBonusMultiplier = 20;
-        if(rand1 <= 10000) // 1% chance
-            nBonusMultiplier = 50;
-        if(rand1 <= 400) // 0.04% chance
-            nBonusMultiplier = 100;
-            */
-
-        int64_t nSubsidy = StakeReward::GetStakeInterest(pDestination, nTime ); // Retrieve Stake after Fork_12
         int64_t nBonusMultiplier = StakeReward::GetBonusReward(nTime, nValueIn, prevHash);
 
         if (fDebug && GetBoolArg("-printcreation"))
@@ -1957,19 +1803,24 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
     if (IsProofOfStake())
     {
         // FlyCoin: coin stake tx earns reward instead of paying fee
+    printf("Get CoinAge: /n");
         uint64_t nCoinAge;
         if (!vtx[1].GetCoinAge(txdb, nCoinAge))
             return error("ConnectBlock() : %s unable to get coin age for coinstake", vtx[1].GetHash().ToString().substr(0,10).c_str());
 
         // FlyCoin: MidnightMiner 2016-10-30 - added for SuperFlyFund 200% PoS rate.
+    printf("Get destination address: /n");
         CTxDestination pDestination;
-        ExtractDestination(vtx[1].vout[1].scriptPubKey, pDestination);
+        if (!ExtractDestination(vtx[1].vout[1].scriptPubKey, pDestination))
+            return error("ConnectBlock() : unable to get Address for coinstake. TxID %s", this->GetHash().ToString().c_str());
 
         int64_t nBonusMultiplier = 1;
         int64_t nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, pindex->nBits, nTime, nFees, nValueIn, prevHash, nBonusMultiplier, pDestination);
 
         if (nStakeReward > nCalculatedStakeReward && pindexBest->nHeight >= FORK_HEIGHT_10)
             return DoS(100, error("ConnectBlock() : coinstake pays too much(actual=%"PRId64" vs calculated=%"PRId64")", nStakeReward, nCalculatedStakeReward));
+
+    printf("Stake Reward: calculated=%"PRId64"/n", nCalculatedStakeReward);
     }
 
     // FlyCoin: track money supply and mint amount info
