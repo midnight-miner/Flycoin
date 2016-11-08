@@ -1280,21 +1280,21 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int
         std::string cseed_str = prevHash.ToString().substr(7,7);
         const char* cseed = cseed_str.c_str();
         long seed = hex2long(cseed);
-        int rand1 = generateMTRandom(seed, 1000000);
+        int rand1 = generateMTRandom(seed, 1000000); //1,000,000
 
-        if(rand1 <= 40000) // 40% chance
+        if(rand1 <= 400000) // 40% chance
             nBonusMultiplier = 2;
-        if(rand1 <= 20000) // 20% chance
+        if(rand1 <= 200000) // 20% chance
             nBonusMultiplier = 3;
-        if(rand1 <= 12000) // 12% chance
+        if(rand1 <= 120000) // 12% chance
             nBonusMultiplier = 5;
-        if(rand1 <= 4000) // 4% chance
+        if(rand1 <= 40000) // 4% chance
             nBonusMultiplier = 10;
-        if(rand1 <= 2000) // 2% chance
+        if(rand1 <= 20000) // 2% chance
             nBonusMultiplier = 20;
-        if(rand1 <= 1000) // 1% chance
+        if(rand1 <= 10000) // 1% chance
             nBonusMultiplier = 50;
-        if(rand1 <= 40) // 0.04% chance
+        if(rand1 <= 400) // 0.04% chance
             nBonusMultiplier = 100;
 
         return (nSubsidy * nBonusMultiplier) + nFees;
